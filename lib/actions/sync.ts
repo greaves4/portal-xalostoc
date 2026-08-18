@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createSaleOrder } from "@/lib/odoo/create-sale-order";
 import { fallbackPayload, sendFallbackEmail } from "@/lib/odoo/fallback";
 import { redirect } from "next/navigation";
@@ -29,12 +30,13 @@ export async function syncOrderToOdoo(orderId: string) {
 }
 
 export async function retrySync(formData: FormData) {
-  const supabase = createAdminClient();
   const orderId = String(formData.get("order_id") ?? "");
   if (!orderId) return;
-  const { data: { user } } = await (await import("@/lib/supabase/server")).createClient().then((client) => client.auth.getUser());
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/");
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  if (!profile || !["admin", "validador"].includes(profile.role)) redirect("/catalogo");
   await syncOrderToOdoo(orderId);
   revalidatePath("/admin/sync");
-  void supabase;
 }

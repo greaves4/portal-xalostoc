@@ -23,3 +23,34 @@ export async function getCatalog(): Promise<CatalogItem[]> {
     state: "Disponible",
   }));
 }
+
+export type ClientSummary = {
+  razonSocial: string;
+  productosActivos: number;
+  pedidosEnCurso: number;
+  creditoDisponible: number | null;
+  cuentaActiva: boolean;
+};
+
+export async function getClientSummary(): Promise<ClientSummary | null> {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return null;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: profile } = await supabase.from("profiles").select("client_id").eq("id", user.id).maybeSingle();
+  if (!profile?.client_id) return null;
+  const [{ data: client }, { count: productos }, { count: enCurso }] = await Promise.all([
+    supabase.from("clients").select("razon_social, credito_limite, credito_usado, activo").eq("id", profile.client_id).maybeSingle(),
+    supabase.from("products").select("id", { count: "exact", head: true }).eq("activo", true),
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("client_id", profile.client_id).in("status", ["borrador", "enviado", "en_validacion", "aprobado"]),
+  ]);
+  if (!client) return null;
+  const limite = Number(client.credito_limite ?? 0);
+  return {
+    razonSocial: client.razon_social,
+    productosActivos: productos ?? 0,
+    pedidosEnCurso: enCurso ?? 0,
+    creditoDisponible: limite > 0 ? limite - Number(client.credito_usado ?? 0) : null,
+    cuentaActiva: Boolean(client.activo),
+  };
+}

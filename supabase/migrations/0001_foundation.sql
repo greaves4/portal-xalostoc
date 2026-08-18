@@ -1,3 +1,10 @@
+-- Xalostoc: schema base, indices, RLS y trigger de alta de perfil.
+-- Todo en una transaccion: si algo falla no quedan tablas sin RLS.
+-- Ojo al mantener: current_role es palabra reservada de Postgres (de ahi app_current_role),
+-- y los helpers deben ser security definer o las politicas de profiles recursan sin fin.
+
+begin;
+
 create extension if not exists "uuid-ossp";
 
 create type user_role as enum ('cliente', 'validador', 'admin');
@@ -49,9 +56,10 @@ create index idx_orders_client on orders(client_id);
 create index idx_orders_status on orders(status);
 create index idx_order_items_order on order_items(order_id);
 create index idx_client_prices_lookup on client_prices(client_id, product_id);
+create index idx_profiles_client on profiles(client_id);
 
-create or replace function current_role() returns user_role language sql stable as $$ select role from profiles where id = auth.uid() $$;
-create or replace function current_client_id() returns uuid language sql stable as $$ select client_id from profiles where id = auth.uid() $$;
+create or replace function app_current_role() returns user_role language sql stable security definer set search_path = public as $$ select role from profiles where id = auth.uid() $$;
+create or replace function current_client_id() returns uuid language sql stable security definer set search_path = public as $$ select client_id from profiles where id = auth.uid() $$;
 create or replace function handle_new_user() returns trigger language plpgsql security definer set search_path = public as $$
 begin
   insert into public.profiles (id, full_name) values (new.id, coalesce(new.raw_user_meta_data ->> 'full_name', new.email));
@@ -69,17 +77,19 @@ alter table orders enable row level security;
 alter table order_items enable row level security;
 alter table sync_log enable row level security;
 
-create policy profiles_self_read on profiles for select using (id = auth.uid() or current_role() in ('admin','validador'));
-create policy clients_read on clients for select using (id = current_client_id() or current_role() in ('admin','validador'));
-create policy clients_admin_write on clients for all using (current_role() = 'admin') with check (current_role() = 'admin');
-create policy products_read on products for select using (activo = true or current_role() in ('admin','validador'));
-create policy products_admin_write on products for all using (current_role() = 'admin') with check (current_role() = 'admin');
-create policy prices_read on client_prices for select using (client_id = current_client_id() or current_role() in ('admin','validador'));
-create policy prices_admin_write on client_prices for all using (current_role() = 'admin') with check (current_role() = 'admin');
-create policy shipping_read on shipping_addresses for select using (client_id = current_client_id() or current_role() in ('admin','validador'));
-create policy orders_read on orders for select using (client_id = current_client_id() or current_role() in ('admin','validador'));
+create policy profiles_self_read on profiles for select using (id = auth.uid() or app_current_role() in ('admin','validador'));
+create policy clients_read on clients for select using (id = current_client_id() or app_current_role() in ('admin','validador'));
+create policy clients_admin_write on clients for all using (app_current_role() = 'admin') with check (app_current_role() = 'admin');
+create policy products_read on products for select using (activo = true or app_current_role() in ('admin','validador'));
+create policy products_admin_write on products for all using (app_current_role() = 'admin') with check (app_current_role() = 'admin');
+create policy prices_read on client_prices for select using (client_id = current_client_id() or app_current_role() in ('admin','validador'));
+create policy prices_admin_write on client_prices for all using (app_current_role() = 'admin') with check (app_current_role() = 'admin');
+create policy shipping_read on shipping_addresses for select using (client_id = current_client_id() or app_current_role() in ('admin','validador'));
+create policy orders_read on orders for select using (client_id = current_client_id() or app_current_role() in ('admin','validador'));
 create policy orders_insert on orders for insert with check (client_id = current_client_id());
-create policy orders_update on orders for update using (client_id = current_client_id() and status in ('borrador','enviado') or current_role() in ('admin','validador'));
-create policy items_read on order_items for select using (exists (select 1 from orders where orders.id = order_id and (orders.client_id = current_client_id() or current_role() in ('admin','validador'))));
+create policy orders_update on orders for update using (client_id = current_client_id() and status in ('borrador','enviado') or app_current_role() in ('admin','validador'));
+create policy items_read on order_items for select using (exists (select 1 from orders where orders.id = order_id and (orders.client_id = current_client_id() or app_current_role() in ('admin','validador'))));
 create policy items_insert on order_items for insert with check (exists (select 1 from orders where orders.id = order_id and orders.client_id = current_client_id()));
-create policy sync_read on sync_log for select using (current_role() in ('admin','validador'));
+create policy sync_read on sync_log for select using (app_current_role() in ('admin','validador'));
+
+commit;

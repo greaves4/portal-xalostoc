@@ -43,9 +43,8 @@ export async function submitOrder(formData: FormData) {
     return [{ product_id: product.id, sku_snapshot: product.sku, nombre_snapshot: product.nombre, unidad: product.unidad, cantidad: line.quantity, precio_unit: price, importe: price * line.quantity }];
   });
   if (!items.length) return;
-  const year = new Date().getFullYear();
-  const { count } = await supabase.from("orders").select("id", { count: "exact", head: true }).gte("created_at", `${year}-01-01T00:00:00.000Z`);
-  const folio = `XAL-${year}-${String((count ?? 0) + 1).padStart(4, "0")}`;
+  const { data: folio, error: folioError } = await supabase.rpc("next_folio");
+  if (folioError || !folio) return;
   const subtotal = items.reduce((sum, item) => sum + item.importe, 0);
   const { data: order, error } = await supabase.from("orders").insert({ folio, client_id: profile.client_id, created_by: user.id, status: "en_validacion", subtotal, notas_cliente: String(formData.get("notes") ?? "").trim() || null }).select("id").single();
   if (error || !order) return;

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 
-export type CatalogItem = { id: string; sku: string; name: string; unit: string; price: string; state: string };
+export type CatalogItem = { id: string; sku: string; name: string; unit: string; price: string; precioNumero: number; state: string };
 
 export async function getCatalog(): Promise<CatalogItem[]> {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return [];
@@ -14,14 +14,18 @@ export async function getCatalog(): Promise<CatalogItem[]> {
     ? await supabase.from("client_prices").select("product_id, precio").eq("client_id", profile.client_id)
     : { data: [] as { product_id: string; precio: number }[] };
   const priceMap = new Map((prices ?? []).map((price) => [price.product_id, price.precio]));
-  return products.map((product) => ({
-    id: product.id,
-    sku: product.sku,
-    name: product.nombre,
-    unit: product.unidad === "metraje" ? "Metraje" : "Pieza",
-    price: `$${Number(priceMap.get(product.id) ?? product.precio_base).toLocaleString("es-MX", { minimumFractionDigits: 2 })}`,
-    state: "Disponible",
-  }));
+  return products.map((product) => {
+    const precio = Number(priceMap.get(product.id) ?? product.precio_base);
+    return {
+      id: product.id,
+      sku: product.sku,
+      name: product.nombre,
+      unit: product.unidad === "metraje" ? "Metraje" : "Pieza",
+      price: `$${precio.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`,
+      precioNumero: precio,
+      state: "Disponible",
+    };
+  });
 }
 
 export type ClientSummary = {

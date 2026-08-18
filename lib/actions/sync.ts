@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createSaleOrder } from "@/lib/odoo/create-sale-order";
+import { syncCatalog } from "@/lib/odoo/sync-catalog";
 import { fallbackPayload, sendFallbackEmail } from "@/lib/odoo/fallback";
 import { redirect } from "next/navigation";
 
@@ -32,11 +33,29 @@ export async function syncOrderToOdoo(orderId: string) {
 export async function retrySync(formData: FormData) {
   const orderId = String(formData.get("order_id") ?? "");
   if (!orderId) return;
+  await requireStaffSession();
+  await syncOrderToOdoo(orderId);
+  revalidatePath("/admin/sync");
+}
+
+async function requireStaffSession() {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/");
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
   if (!profile || !["admin", "validador"].includes(profile.role)) redirect("/catalogo");
-  await syncOrderToOdoo(orderId);
+}
+
+export async function runCatalogSync() {
+  await requireStaffSession();
+  const report = await syncCatalog();
+  await createAdminClient().from("sync_log").insert({
+    exito: report.errores.length === 0,
+    odoo_response: report,
+    error_msg: report.errores.length ? report.errores.join(" | ").slice(0, 2000) : null,
+  });
   revalidatePath("/admin/sync");
+  revalidatePath("/admin/productos");
+  revalidatePath("/admin/clientes");
+  revalidatePath("/catalogo");
 }

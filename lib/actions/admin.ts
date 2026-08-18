@@ -120,3 +120,30 @@ export async function createShippingAddress(formData: FormData) {
   revalidatePath("/admin/clientes");
   revalidatePath("/carrito");
 }
+
+export async function updateClient(formData: FormData) {
+  const supabase = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const razonSocial = String(formData.get("razon_social") ?? "").trim();
+  if (!id || !razonSocial) return;
+  const numero = (campo: string) => {
+    const valor = Number(formData.get(campo));
+    return Number.isFinite(valor) && valor >= 0 ? valor : 0;
+  };
+  const partnerId = String(formData.get("odoo_partner_id") ?? "").trim();
+  // credito_usado no se toca: lo mantiene el trigger sobre orders.
+  await supabase.from("clients").update({
+    razon_social: razonSocial,
+    rfc: String(formData.get("rfc") ?? "").trim().toUpperCase() || null,
+    contacto_email: String(formData.get("contacto_email") ?? "").trim().toLowerCase() || null,
+    contacto_tel: String(formData.get("contacto_tel") ?? "").trim() || null,
+    odoo_partner_id: partnerId ? Number(partnerId) : null,
+    credito_limite: numero("credito_limite"),
+    credito_liquidado: numero("credito_liquidado"),
+    activo: formData.get("activo") === "on",
+  }).eq("id", id);
+  revalidatePath("/admin/clientes");
+  revalidatePath("/admin/bandeja");
+  revalidatePath("/catalogo");
+  redirect("/admin/clientes");
+}

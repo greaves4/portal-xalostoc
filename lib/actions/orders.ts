@@ -43,17 +43,24 @@ export async function submitOrder(formData: FormData) {
     return [{ product_id: product.id, sku_snapshot: product.sku, nombre_snapshot: product.nombre, unidad: product.unidad, cantidad: line.quantity, precio_unit: price, importe: price * line.quantity }];
   });
   if (!items.length) return;
+  // La direccion se valida contra las del propio cliente: el id viaja en el form.
+  const direccionId = String(formData.get("shipping_address_id") ?? "").trim();
+  let shippingAddressId: string | null = null;
+  if (direccionId) {
+    const { data: direccion } = await supabase.from("shipping_addresses").select("id").eq("id", direccionId).eq("client_id", profile.client_id).maybeSingle();
+    shippingAddressId = direccion?.id ?? null;
+  }
   const { data: folio, error: folioError } = await supabase.rpc("next_folio");
   if (folioError || !folio) return;
   const subtotal = items.reduce((sum, item) => sum + item.importe, 0);
-  const { data: order, error } = await supabase.from("orders").insert({ folio, client_id: profile.client_id, created_by: user.id, status: "en_validacion", subtotal, notas_cliente: String(formData.get("notes") ?? "").trim() || null }).select("id").single();
+  const { data: order, error } = await supabase.from("orders").insert({ folio, client_id: profile.client_id, created_by: user.id, shipping_address_id: shippingAddressId, status: "en_validacion", subtotal, notas_cliente: String(formData.get("notes") ?? "").trim() || null }).select("id").single();
   if (error || !order) return;
   await supabase.from("order_items").insert(items.map((item) => ({ ...item, order_id: order.id })));
   await sendNotice({ to: process.env.MAIL_VALIDADOR, subject: `Nuevo pedido ${folio}`, text: `Se recibió el pedido ${folio} por $${subtotal.toFixed(2)} y está listo para validación.` });
   revalidatePath("/catalogo");
   revalidatePath("/carrito");
   revalidatePath("/pedidos");
-  redirect(`/pedidos/${order.id}`);
+  redirect(`/pedidos/${order.id}?enviado=1`);
 }
 
 export async function approveOrder(formData: FormData) {

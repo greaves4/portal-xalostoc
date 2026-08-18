@@ -99,3 +99,24 @@ export async function createClientUser(formData: FormData) {
   await supabase.from("clients").update({ contacto_email: email }).eq("id", clientId);
   revalidatePath("/admin/clientes");
 }
+
+export async function createShippingAddress(formData: FormData) {
+  const supabase = await requireAdmin();
+  const clientId = String(formData.get("addr_client_id") ?? "");
+  const calle = String(formData.get("calle") ?? "").trim();
+  if (!clientId || !calle) return;
+  const esDefault = formData.get("es_default") === "on";
+  // Solo una direccion por cliente puede ser la predeterminada.
+  if (esDefault) await supabase.from("shipping_addresses").update({ es_default: false }).eq("client_id", clientId);
+  await supabase.from("shipping_addresses").insert({
+    client_id: clientId,
+    etiqueta: String(formData.get("etiqueta") ?? "").trim() || null,
+    calle,
+    ciudad: String(formData.get("ciudad") ?? "").trim() || null,
+    estado: String(formData.get("estado_dir") ?? "").trim() || null,
+    cp: String(formData.get("cp") ?? "").trim() || null,
+    es_default: esDefault,
+  });
+  revalidatePath("/admin/clientes");
+  revalidatePath("/carrito");
+}

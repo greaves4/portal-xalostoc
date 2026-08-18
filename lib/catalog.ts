@@ -58,3 +58,17 @@ export async function getClientSummary(): Promise<ClientSummary | null> {
     cuentaActiva: Boolean(client.activo),
   };
 }
+
+export type ShippingAddress = { id: string; etiqueta: string | null; calle: string | null; ciudad: string | null; estado: string | null; cp: string | null; es_default: boolean | null };
+
+export async function getShippingAddresses(): Promise<ShippingAddress[]> {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return [];
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data: profile } = await supabase.from("profiles").select("client_id").eq("id", user.id).maybeSingle();
+  if (!profile?.client_id) return [];
+  const { data } = await supabase.from("shipping_addresses").select("id, etiqueta, calle, ciudad, estado, cp, es_default")
+    .eq("client_id", profile.client_id).order("es_default", { ascending: false });
+  return (data ?? []) as ShippingAddress[];
+}

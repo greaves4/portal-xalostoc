@@ -3,13 +3,13 @@
 import { Minus, Plus, Send, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { submitOrder } from "@/lib/actions/orders";
-import type { CatalogItem } from "@/lib/catalog";
+import type { CatalogItem, ShippingAddress } from "@/lib/catalog";
 
 type Line = { productId: string; quantity: number };
 
 const money = (value: number) => `$${value.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
 
-export function CartLines({ products }: { products: CatalogItem[] }) {
+export function CartLines({ products, addresses }: { products: CatalogItem[]; addresses: ShippingAddress[] }) {
   const [lines, setLines] = useState<Line[]>([]);
   const [cargado, setCargado] = useState(false);
 
@@ -63,6 +63,13 @@ export function CartLines({ products }: { products: CatalogItem[] }) {
 
     <p style={{ textAlign: "right", fontFamily: "var(--heading)", fontSize: 24, margin: "20px 0 0" }}>Total: {money(total)}</p>
     <p className="muted" style={{ textAlign: "right", fontSize: 12 }}>Los precios se vuelven a verificar en el servidor al enviar.</p>
+
+    {addresses.length > 0 && <div className="field" style={{ maxWidth: 560, marginTop: 24 }}>
+      <label htmlFor="shipping_address_id">Dirección de entrega</label>
+      <select className="input" id="shipping_address_id" name="shipping_address_id" defaultValue={addresses.find((a) => a.es_default)?.id ?? addresses[0].id}>
+        {addresses.map((a) => <option key={a.id} value={a.id}>{[a.etiqueta, a.calle, a.ciudad, a.estado, a.cp].filter(Boolean).join(" · ")}</option>)}
+      </select>
+    </div>}
 
     <div className="field" style={{ maxWidth: 560, marginTop: 24 }}>
       <label htmlFor="notes">Notas para el validador</label>

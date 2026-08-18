@@ -1,7 +1,7 @@
-import { Box, ClipboardList, LogOut, Search, ShoppingCart } from "lucide-react";
+import { Box, ClipboardList, LogOut, ShoppingCart } from "lucide-react";
 import { getCatalog, getClientSummary } from "@/lib/catalog";
 import { signOut } from "@/lib/actions/auth";
-import { AddToCart } from "@/components/catalog/add-to-cart";
+import { ProductTable } from "@/components/catalog/product-table";
 
 function Corners() { return <><i className="corner tl"/><i className="corner tr"/><i className="corner bl"/><i className="corner br"/></>; }
 
@@ -18,7 +18,7 @@ export default async function CatalogoPage() {
         <div className="card stat span-3 blueprint"><Corners/><span className="kicker">Crédito disponible</span><span className="number">{summary?.creditoDisponible != null ? money(summary.creditoDisponible) : "—"}</span><span className="muted" style={{ fontSize: 12 }}>{summary?.creditoDisponible != null ? "Referencia informativa" : "Sin límite registrado"}</span></div>
         <div className="card stat span-3 blueprint"><Corners/><span className="kicker">Cuenta</span><span className="number">{summary?.cuentaActiva === false ? "SUSPENDIDA" : "ACTIVA"}</span><span className="muted" style={{ fontSize: 12 }}>Cliente recurrente</span></div>
       </div>
-      <section className="card blueprint"><Corners/><div style={{ display:"flex", justifyContent:"space-between", alignItems:"end", gap:16, marginBottom:18 }}><div><span className="kicker">02 · Lista de productos</span><h2 style={{ marginBottom:0 }}>Líneas disponibles</h2></div><div style={{ position:"relative", width:240 }}><Search size={15} strokeWidth={1.5} style={{ position:"absolute", left:10, top:11, color:"var(--muted)" }}/><input className="input" style={{ paddingLeft:32 }} placeholder="Buscar SKU o nombre"/></div></div><div className="table-wrap">{products.length ? <table className="table"><thead><tr><th>SKU</th><th>Producto</th><th>Unidad</th><th>Precio</th><th>Estado</th><th aria-label="Acción"/></tr></thead><tbody>{products.map((product) => <tr key={product.sku}><td style={{ fontFamily:"var(--heading)", fontWeight:600, color:"var(--accent-700)" }}>{product.sku}</td><td>{product.name}</td><td className="muted">{product.unit}</td><td style={{ fontFamily:"var(--heading)", fontSize:18 }}>{product.price}</td><td><span className="status">{product.state}</span></td><td><AddToCart productId={product.id}/></td></tr>)}</tbody></table> : <div style={{ padding:"24px 10px", color:"var(--muted)" }}>El catálogo aún no tiene productos activos. Carga el inventario desde el panel de administración.</div>}</div></section>
+      <section className="card blueprint"><Corners/><ProductTable products={products}/></section>
       <p className="muted" style={{ marginTop:22, fontSize:12 }}><Box size={13} style={{ verticalAlign:"-2px", marginRight:5 }} strokeWidth={1.5}/> Los precios mostrados son exclusivos de tu cuenta y pueden variar por unidad de venta.</p>
     </main></>;
 }

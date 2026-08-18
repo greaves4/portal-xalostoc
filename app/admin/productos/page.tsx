@@ -1,4 +1,5 @@
 import { FileUp, PackagePlus, Tags } from "lucide-react";
+import { LogoutButton } from "@/components/logout-button";
 import { assignClientPrice, createProduct, importProductsCsv, toggleProduct } from "@/lib/actions/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,7 +10,7 @@ export default async function ProductsPage() {
     supabase.from("clients").select("id, razon_social").eq("activo", true).order("razon_social"),
   ]);
   return <>
-    <nav className="nav"><span className="nav-brand">Telas Xalostoc / Admin</span><a className="nav-link active" href="/admin/productos">Productos</a><a className="nav-link" href="/admin/clientes">Clientes</a><a className="nav-link" href="/admin/bandeja">Bandeja</a></nav>
+    <nav className="nav"><span className="nav-brand">Telas Xalostoc / Admin</span><a className="nav-link active" href="/admin/productos">Productos</a><a className="nav-link" href="/admin/clientes">Clientes</a><a className="nav-link" href="/admin/bandeja">Bandeja</a><span className="nav-divider"/><LogoutButton/></nav>
     <main className="wrap main"><div className="dashboard-head"><div><span className="kicker">Administración / Catálogo</span><h1>Productos</h1><p className="muted">Alta, importación y precios por cuenta.</p></div></div>
       <div className="grid">
         <section className="card blueprint span-4"><i className="corner tl"/><i className="corner tr"/><i className="corner bl"/><i className="corner br"/><span className="kicker">01 · Nuevo registro</span><h2 style={{ fontSize:27 }}>Agregar producto</h2><form action={createProduct} className="login-form"><div className="field"><label htmlFor="sku">SKU</label><input className="input" id="sku" name="sku" placeholder="TX-2048" required /></div><div className="field"><label htmlFor="nombre">Nombre</label><input className="input" id="nombre" name="nombre" placeholder="Loneta industrial" required /></div><div className="field"><label htmlFor="unidad">Unidad de venta</label><select className="input" id="unidad" name="unidad" defaultValue="pieza"><option value="pieza">Pieza</option><option value="metraje">Metraje</option></select></div><div className="field"><label htmlFor="precio_base">Precio base</label><input className="input" id="precio_base" name="precio_base" type="number" min="0" step="0.01" placeholder="0.00" required /></div><button className="btn btn-primary blueprint" type="submit"><PackagePlus size={15} strokeWidth={1.5}/> Guardar producto</button></form></section>

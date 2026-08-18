@@ -3,6 +3,7 @@ import { AlertCircle, MapPin } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { etiquetaCliente } from "@/lib/order-status";
 import { LimpiarCarrito } from "@/components/cart/limpiar-carrito";
+import { LogoutButton } from "@/components/logout-button";
 
 const money = (value: unknown) => `$${Number(value ?? 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
 
@@ -17,7 +18,8 @@ export default async function OrderDetailPage({ params, searchParams }: { params
   if (!order) notFound();
   const direccion = Array.isArray(order.shipping_addresses) ? order.shipping_addresses[0] : order.shipping_addresses;
 
-  return <main className="wrap main">
+  return <><nav className="nav"><a className="nav-brand" href="/catalogo">Telas Xalostoc</a><a className="nav-link" href="/catalogo">Catálogo</a><a className="nav-link active" href="/pedidos">Mis pedidos</a><span className="nav-divider"/><LogoutButton/></nav>
+  <main className="wrap main">
     {enviado === "1" && <LimpiarCarrito />}
     <a className="btn btn-ghost" href="/pedidos">← Mis pedidos</a>
     <div className="dashboard-head" style={{ marginTop: 30 }}>
@@ -54,5 +56,5 @@ export default async function OrderDetailPage({ params, searchParams }: { params
       </p>}
       {order.notas_cliente && <p className="muted" style={{ borderTop: "1px solid var(--divider)", paddingTop: 14, marginTop: 14, marginBottom: 0, fontSize: 13 }}>Nota: {order.notas_cliente}</p>}
     </section>
-  </main>;
+  </main></>;
 }

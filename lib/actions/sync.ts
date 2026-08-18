@@ -16,7 +16,13 @@ export async function syncOrderToOdoo(orderId: string) {
   if (!order || order.status !== "aprobado") return;
   const { count: fallosPrevios } = await supabase.from("sync_log").select("id", { count: "exact", head: true }).eq("order_id", order.id).eq("exito", false);
   const intento = (fallosPrevios ?? 0) + 1;
-  const items = (order.order_items ?? []).map((item) => ({ ...item, odoo_product_id: Array.isArray(item.products) ? item.products[0]?.odoo_product_id : null }));
+  // products viene como objeto en una relacion to-one; el array solo aparece segun como
+  // se infiera el tipo. Contemplar ambos, o odoo_product_id sale siempre null y el pedido
+  // se rechaza solo con "Falta odoo_product_id".
+  const items = (order.order_items ?? []).map((item) => {
+    const producto = Array.isArray(item.products) ? item.products[0] : item.products;
+    return { ...item, odoo_product_id: producto?.odoo_product_id ?? null };
+  });
   let result: { ok: boolean; error?: string; odoo_id?: number; odoo_name?: string };
   if (process.env.ODOO_SYNC_ENABLED !== "true") {
     result = { ok: false, error: "Modo fallback: ODOO_SYNC_ENABLED=false." };

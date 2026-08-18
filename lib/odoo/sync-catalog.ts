@@ -73,7 +73,8 @@ export async function syncCatalog(): Promise<SyncReport> {
       const uom = uoms[p.unidad as "metraje" | "pieza"];
       if (!uom) { report.errores.push(`Sin unidad de medida en Odoo para ${p.sku}.`); continue; }
       const creado = await odooExecute("product.product", "create",
-        [{ name: p.nombre, default_code: p.sku, list_price: Number(p.precio_base), uom_id: uom, uom_po_id: uom, type: "consu", sale_ok: true }]);
+        // Sin uom_po_id: las versiones recientes de Odoo lo quitaron de product.product.
+        [{ name: p.nombre, default_code: p.sku, list_price: Number(p.precio_base), uom_id: uom, type: "consu", sale_ok: true }]);
       if (!creado.ok || typeof creado.value !== "number") {
         report.errores.push(`Crear ${p.sku} en Odoo: ${creado.ok ? "sin id" : creado.error}`);
         continue;

@@ -37,7 +37,7 @@ export function ProductTable({ products }: { products: CatalogItem[] }) {
           <td data-label="Unidad" className="muted">{product.unit}</td>
           <td data-label="Precio" style={{ fontFamily: "var(--heading)", fontSize: 18 }}>{product.price}</td>
           <td data-label="Estado"><span className="status">{product.state}</span></td>
-          <td><AddToCart productId={product.id} /></td>
+          <td><AddToCart productId={product.id} unidad={product.unidad} nombre={product.name} /></td>
         </tr>)}</tbody>
       </table> : <div style={{ padding: "24px 10px", color: "var(--muted)" }}>
         {products.length

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { UNIDADES, unidadDe, type Unidad } from "@/lib/unidades";
 
-export type CatalogItem = { id: string; sku: string; name: string; unit: string; price: string; precioNumero: number; state: string };
+export type CatalogItem = { id: string; sku: string; name: string; unidad: Unidad; unit: string; price: string; precioNumero: number; state: string };
 
 export async function getCatalog(): Promise<CatalogItem[]> {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return [];
@@ -20,7 +21,8 @@ export async function getCatalog(): Promise<CatalogItem[]> {
       id: product.id,
       sku: product.sku,
       name: product.nombre,
-      unit: product.unidad === "metraje" ? "Metraje" : "Pieza",
+      unidad: unidadDe(product.unidad),
+      unit: UNIDADES[unidadDe(product.unidad)].etiqueta,
       price: `$${precio.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`,
       precioNumero: precio,
       state: "Disponible",

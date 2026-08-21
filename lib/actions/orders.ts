@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { syncOrderToOdoo } from "@/lib/actions/sync";
 import { sendNotice } from "@/lib/mail/resend";
+import { normalizarCantidad, unidadDe } from "@/lib/unidades";
 
 type CartLine = { productId: string; quantity: number };
 
@@ -36,11 +37,16 @@ export async function submitOrder(formData: FormData) {
   if (!products?.length) return;
   const priceMap = new Map((prices ?? []).map((price) => [price.product_id, Number(price.precio)]));
   const productMap = new Map(products.map((product) => [product.id, product]));
+  // La cantidad se normaliza aqui contra la unidad real del producto: las piezas
+  // se redondean y el metraje se limita a tres decimales. Lo que mande el cliente
+  // es una sugerencia, no un dato de confianza.
   const items = cleanLines.flatMap((line) => {
     const product = productMap.get(line.productId);
     if (!product) return [];
+    const cantidad = normalizarCantidad(line.quantity, unidadDe(product.unidad));
+    if (cantidad <= 0) return [];
     const price = priceMap.get(product.id) ?? Number(product.precio_base);
-    return [{ product_id: product.id, sku_snapshot: product.sku, nombre_snapshot: product.nombre, unidad: product.unidad, cantidad: line.quantity, precio_unit: price, importe: price * line.quantity }];
+    return [{ product_id: product.id, sku_snapshot: product.sku, nombre_snapshot: product.nombre, unidad: product.unidad, cantidad, precio_unit: price, importe: Math.round(price * cantidad * 100) / 100 }];
   });
   if (!items.length) return;
   // La direccion se valida contra las del propio cliente: el id viaja en el form.

@@ -4,14 +4,18 @@ import { Minus, Plus, Send, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { submitOrder } from "@/lib/actions/orders";
 import type { CatalogItem, ShippingAddress } from "@/lib/catalog";
+import { UNIDADES, normalizarCantidad } from "@/lib/unidades";
 
 type Line = { productId: string; quantity: number };
 
 const money = (value: number) => `$${value.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
+const numero = (value: number) => value.toLocaleString("es-MX", { maximumFractionDigits: 3 });
 
 export function CartLines({ products, addresses }: { products: CatalogItem[]; addresses: ShippingAddress[] }) {
   const [lines, setLines] = useState<Line[]>([]);
   const [cargado, setCargado] = useState(false);
+  // Lo que el cliente esta tecleando, antes de que sea un numero valido ("12,", "0.").
+  const [borradores, setBorradores] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const guardadas = JSON.parse(localStorage.getItem("xalostoc-cart") ?? "[]") as Line[];
@@ -46,19 +50,37 @@ export function CartLines({ products, addresses }: { products: CatalogItem[]; ad
     <input type="hidden" name="items" value={JSON.stringify(lines)} />
     <div className="table-wrap"><table className="table">
       <thead><tr><th>SKU</th><th>Producto</th><th>Unidad</th><th>Precio</th><th>Cantidad</th><th>Importe</th><th aria-label="Quitar" /></tr></thead>
-      <tbody>{detalle.map((l) => <tr key={l.productId}>
-        <td data-label="SKU" style={{ fontFamily: "var(--heading)", fontWeight: 600, color: "var(--accent-700)" }}>{l.producto.sku}</td>
-        <td data-label="Producto">{l.producto.name}</td>
-        <td data-label="Unidad" className="muted">{l.producto.unit}</td>
-        <td data-label="Precio">{l.producto.price}</td>
-        <td data-label="Cantidad"><div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button className="btn btn-secondary" type="button" onClick={() => update(l.productId, l.quantity - 1)} aria-label={`Reducir ${l.producto.name}`}><Minus size={13} /></button>
-          <strong>{l.quantity}</strong>
-          <button className="btn btn-secondary" type="button" onClick={() => update(l.productId, l.quantity + 1)} aria-label={`Aumentar ${l.producto.name}`}><Plus size={13} /></button>
-        </div></td>
-        <td data-label="Importe" style={{ fontFamily: "var(--heading)", fontSize: 18 }}>{money(l.importe)}</td>
-        <td><button className="btn btn-ghost" type="button" onClick={() => update(l.productId, 0)} aria-label={`Eliminar ${l.producto.name}`}><Trash2 size={15} /></button></td>
-      </tr>)}</tbody>
+      <tbody>{detalle.map((l) => {
+        const u = UNIDADES[l.producto.unidad];
+        const enEdicion = borradores[l.productId];
+        return <tr key={l.productId}>
+          <td data-label="SKU" style={{ fontFamily: "var(--heading)", fontWeight: 600, color: "var(--accent-700)" }}>{l.producto.sku}</td>
+          <td data-label="Producto">{l.producto.name}</td>
+          <td data-label="Unidad" className="muted">{l.producto.unit}</td>
+          <td data-label="Precio">{l.producto.price} <span className="muted" style={{ fontSize: 12 }}>/ {u.abrev}</span></td>
+          <td data-label="Cantidad"><div className="qty-field">
+            <button className="btn btn-secondary" type="button" aria-label={`Reducir ${l.producto.name}`}
+              onClick={() => update(l.productId, normalizarCantidad(l.quantity - u.paso, l.producto.unidad))}><Minus size={13} /></button>
+            <input
+              className="input" type="number" inputMode={u.decimales ? "decimal" : "numeric"}
+              min={u.minimo} step={u.paso}
+              value={enEdicion ?? numero(l.quantity)}
+              aria-label={`Cantidad de ${l.producto.name} en ${u.sustantivo}`}
+              onChange={(e) => {
+                setBorradores((b) => ({ ...b, [l.productId]: e.target.value }));
+                const valor = normalizarCantidad(Number(e.target.value.replace(",", ".")), l.producto.unidad);
+                if (valor > 0) update(l.productId, valor);
+              }}
+              onBlur={() => setBorradores(({ [l.productId]: _, ...resto }) => resto)}
+            />
+            <span className="qty-unit">{u.sustantivo}</span>
+            <button className="btn btn-secondary" type="button" aria-label={`Aumentar ${l.producto.name}`}
+              onClick={() => update(l.productId, normalizarCantidad(l.quantity + u.paso, l.producto.unidad))}><Plus size={13} /></button>
+          </div></td>
+          <td data-label="Importe" style={{ fontFamily: "var(--heading)", fontSize: 18 }}>{money(l.importe)}</td>
+          <td><button className="btn btn-ghost" type="button" onClick={() => update(l.productId, 0)} aria-label={`Eliminar ${l.producto.name}`}><Trash2 size={15} /></button></td>
+        </tr>;
+      })}</tbody>
     </table></div>
 
     <p style={{ textAlign: "right", fontFamily: "var(--heading)", fontSize: 24, margin: "20px 0 0" }}>Total: {money(total)}</p>

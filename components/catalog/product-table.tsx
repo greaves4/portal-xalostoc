@@ -16,14 +16,14 @@ export function ProductTable({ products }: { products: CatalogItem[] }) {
   }, [products, busqueda]);
 
   return <>
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end", gap: 16, marginBottom: 18 }}>
+    <div className="section-head">
       <div>
         <span className="kicker">02 · Lista de productos</span>
         <h2 style={{ marginBottom: 0 }}>Líneas disponibles</h2>
       </div>
-      <div style={{ position: "relative", width: 240 }}>
-        <Search size={15} strokeWidth={1.5} style={{ position: "absolute", left: 10, top: 11, color: "var(--muted)" }} />
-        <input className="input" style={{ paddingLeft: 32 }} placeholder="Buscar SKU o nombre"
+      <div className="section-search">
+        <Search size={15} strokeWidth={1.5} />
+        <input className="input" placeholder="Buscar SKU o nombre"
           value={busqueda} onChange={(e) => setBusqueda(e.target.value)} aria-label="Buscar en el catálogo" />
       </div>
     </div>

@@ -24,9 +24,9 @@ export function ProductList({ products }: { products: Producto[] }) {
   const inactivos = products.filter((p) => !p.activo).length;
 
   return <>
-    <div style={{ position: "relative", marginBottom: 12 }}>
-      <Search size={15} strokeWidth={1.5} style={{ position: "absolute", left: 10, top: 12, color: "var(--muted)" }} />
-      <input className="input" style={{ paddingLeft: 32 }} placeholder="Buscar SKU o nombre"
+    <div className="section-search" style={{ width: "100%", marginBottom: 12 }}>
+      <Search size={15} strokeWidth={1.5} />
+      <input className="input" placeholder="Buscar SKU o nombre"
         value={busqueda} onChange={(e) => setBusqueda(e.target.value)} aria-label="Buscar en el catálogo maestro" />
     </div>
 

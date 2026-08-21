@@ -1,7 +1,7 @@
 import { KeyRound, MapPin, Pencil, Save, UserPlus } from "lucide-react";
 import { createClientAccount, createClientUser, createShippingAddress, updateClient } from "@/lib/actions/admin";
 import { createClient } from "@/lib/supabase/server";
-import { LogoutButton } from "@/components/logout-button";
+import { AdminNav } from "@/components/app-nav";
 
 const money = (value: unknown) => `$${Number(value ?? 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
 
@@ -17,7 +17,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     Number(c.credito_limite) - (Number(c.credito_usado) - Number(c.credito_liquidado));
 
   return <>
-    <nav className="nav"><span className="nav-brand">Telas Xalostoc / Admin</span><a className="nav-link" href="/admin/productos">Productos</a><a className="nav-link active" href="/admin/clientes">Clientes</a><a className="nav-link" href="/admin/bandeja">Bandeja</a><a className="nav-link" href="/admin/sync">Sync Odoo</a><span className="nav-divider" /><LogoutButton /></nav>
+    <AdminNav activo="/admin/clientes"/>
     <main className="wrap main">
       <div className="dashboard-head"><div><span className="kicker">Administración / Cuentas</span><h1>Clientes</h1><p className="muted">Cuentas recurrentes, crédito y mapeos de Odoo.</p></div></div>
       <div className="grid">
@@ -85,14 +85,14 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
           <div className="table-wrap"><table className="table">
             <thead><tr><th>Razón social</th><th>Crédito</th><th>Odoo</th><th>Estado</th><th aria-label="Editar" /></tr></thead>
             <tbody>{(clients ?? []).map((client) => <tr key={client.id}>
-              <td>{client.razon_social}<div className="muted" style={{ fontSize: 12 }}>{client.contacto_email || "sin correo"}</div></td>
-              <td>{Number(client.credito_limite) > 0
+              <td data-label="Razón social">{client.razon_social}<div className="muted" style={{ fontSize: 12 }}>{client.contacto_email || "sin correo"}</div></td>
+              <td data-label="Crédito">{Number(client.credito_limite) > 0
                 ? <>{money(disponible(client))} <span className="muted" style={{ fontSize: 12 }}>de {money(client.credito_limite)}</span></>
                 : <span className="muted">sin límite</span>}
                 <div className="muted" style={{ fontSize: 12 }}>comprometido {money(client.credito_usado)}{Number(client.credito_liquidado) > 0 && <> · pagado {money(client.credito_liquidado)}</>}</div>
               </td>
-              <td className="muted">{client.odoo_partner_id ?? "-"}</td>
-              <td><span className="status">{client.activo ? "Activo" : "Inactivo"}</span></td>
+              <td data-label="Odoo" className="muted">{client.odoo_partner_id ?? "-"}</td>
+              <td data-label="Estado"><span className="status">{client.activo ? "Activo" : "Inactivo"}</span></td>
               <td><a className="btn btn-ghost" href={`/admin/clientes?editar=${client.id}`}><Pencil size={13} strokeWidth={1.5} /> Editar</a></td>
             </tr>)}</tbody>
           </table>{!clients?.length && <p className="muted" style={{ padding: 20 }}>No hay clientes registrados.</p>}</div>

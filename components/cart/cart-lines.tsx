@@ -47,16 +47,16 @@ export function CartLines({ products, addresses }: { products: CatalogItem[]; ad
     <div className="table-wrap"><table className="table">
       <thead><tr><th>SKU</th><th>Producto</th><th>Unidad</th><th>Precio</th><th>Cantidad</th><th>Importe</th><th aria-label="Quitar" /></tr></thead>
       <tbody>{detalle.map((l) => <tr key={l.productId}>
-        <td style={{ fontFamily: "var(--heading)", fontWeight: 600, color: "var(--accent-700)" }}>{l.producto.sku}</td>
-        <td>{l.producto.name}</td>
-        <td className="muted">{l.producto.unit}</td>
-        <td>{l.producto.price}</td>
-        <td><div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <td data-label="SKU" style={{ fontFamily: "var(--heading)", fontWeight: 600, color: "var(--accent-700)" }}>{l.producto.sku}</td>
+        <td data-label="Producto">{l.producto.name}</td>
+        <td data-label="Unidad" className="muted">{l.producto.unit}</td>
+        <td data-label="Precio">{l.producto.price}</td>
+        <td data-label="Cantidad"><div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button className="btn btn-secondary" type="button" onClick={() => update(l.productId, l.quantity - 1)} aria-label={`Reducir ${l.producto.name}`}><Minus size={13} /></button>
           <strong>{l.quantity}</strong>
           <button className="btn btn-secondary" type="button" onClick={() => update(l.productId, l.quantity + 1)} aria-label={`Aumentar ${l.producto.name}`}><Plus size={13} /></button>
         </div></td>
-        <td style={{ fontFamily: "var(--heading)", fontSize: 18 }}>{money(l.importe)}</td>
+        <td data-label="Importe" style={{ fontFamily: "var(--heading)", fontSize: 18 }}>{money(l.importe)}</td>
         <td><button className="btn btn-ghost" type="button" onClick={() => update(l.productId, 0)} aria-label={`Eliminar ${l.producto.name}`}><Trash2 size={15} /></button></td>
       </tr>)}</tbody>
     </table></div>

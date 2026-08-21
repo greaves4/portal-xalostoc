@@ -32,11 +32,11 @@ export function ProductTable({ products }: { products: CatalogItem[] }) {
       {visibles.length ? <table className="table">
         <thead><tr><th>SKU</th><th>Producto</th><th>Unidad</th><th>Precio</th><th>Estado</th><th aria-label="Acción" /></tr></thead>
         <tbody>{visibles.map((product) => <tr key={product.sku}>
-          <td style={{ fontFamily: "var(--heading)", fontWeight: 600, color: "var(--accent-700)" }}>{product.sku}</td>
-          <td>{product.name}</td>
-          <td className="muted">{product.unit}</td>
-          <td style={{ fontFamily: "var(--heading)", fontSize: 18 }}>{product.price}</td>
-          <td><span className="status">{product.state}</span></td>
+          <td data-label="SKU" style={{ fontFamily: "var(--heading)", fontWeight: 600, color: "var(--accent-700)" }}>{product.sku}</td>
+          <td data-label="Producto">{product.name}</td>
+          <td data-label="Unidad" className="muted">{product.unit}</td>
+          <td data-label="Precio" style={{ fontFamily: "var(--heading)", fontSize: 18 }}>{product.price}</td>
+          <td data-label="Estado"><span className="status">{product.state}</span></td>
           <td><AddToCart productId={product.id} /></td>
         </tr>)}</tbody>
       </table> : <div style={{ padding: "24px 10px", color: "var(--muted)" }}>

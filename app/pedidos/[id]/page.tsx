@@ -3,7 +3,7 @@ import { AlertCircle, MapPin } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { etiquetaCliente } from "@/lib/order-status";
 import { LimpiarCarrito } from "@/components/cart/limpiar-carrito";
-import { LogoutButton } from "@/components/logout-button";
+import { PortalNav } from "@/components/app-nav";
 
 const money = (value: unknown) => `$${Number(value ?? 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
 
@@ -18,7 +18,7 @@ export default async function OrderDetailPage({ params, searchParams }: { params
   if (!order) notFound();
   const direccion = Array.isArray(order.shipping_addresses) ? order.shipping_addresses[0] : order.shipping_addresses;
 
-  return <><nav className="nav"><a className="nav-brand" href="/catalogo">Telas Xalostoc</a><a className="nav-link" href="/catalogo">Catálogo</a><a className="nav-link active" href="/pedidos">Mis pedidos</a><span className="nav-divider"/><LogoutButton/></nav>
+  return <><PortalNav activo="/pedidos"/>
   <main className="wrap main">
     {enviado === "1" && <LimpiarCarrito />}
     <a className="btn btn-ghost" href="/pedidos">← Mis pedidos</a>
@@ -41,12 +41,12 @@ export default async function OrderDetailPage({ params, searchParams }: { params
       <div className="table-wrap"><table className="table">
         <thead><tr><th>SKU</th><th>Producto</th><th>Unidad</th><th>Cantidad</th><th>Precio</th><th>Importe</th></tr></thead>
         <tbody>{(order.order_items ?? []).map((item) => <tr key={item.sku_snapshot}>
-          <td style={{ fontFamily: "var(--heading)", fontWeight: 600, color: "var(--accent-700)" }}>{item.sku_snapshot}</td>
-          <td>{item.nombre_snapshot}</td>
-          <td className="muted">{item.unidad === "metraje" ? "Metraje" : "Pieza"}</td>
-          <td>{item.cantidad}</td>
-          <td>{money(item.precio_unit)}</td>
-          <td>{money(item.importe)}</td>
+          <td data-label="SKU" style={{ fontFamily: "var(--heading)", fontWeight: 600, color: "var(--accent-700)" }}>{item.sku_snapshot}</td>
+          <td data-label="Producto">{item.nombre_snapshot}</td>
+          <td data-label="Unidad" className="muted">{item.unidad === "metraje" ? "Metraje" : "Pieza"}</td>
+          <td data-label="Cantidad">{item.cantidad}</td>
+          <td data-label="Precio">{money(item.precio_unit)}</td>
+          <td data-label="Importe">{money(item.importe)}</td>
         </tr>)}</tbody>
       </table></div>
       <p style={{ textAlign: "right", fontFamily: "var(--heading)", fontSize: 24, margin: "20px 0 0" }}>Total: {money(order.subtotal)}</p>
